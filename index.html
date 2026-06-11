@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sales Analytics Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+--bg: #0f1117;
+--surface: #16181f;
+--card: #1c1f2a;
+--border: #252836;
+--accent: #7c6af7;
+--accent2: #4fc3f7;
+--accent3: #f7916a;
+--accent4: #5ef49c;
+--text-primary: #e8eaf0;
+--text-muted: #7a7f96;
+--text-dim: #3d4155;
+}
+
+body {
+font-family: 'Inter', sans-serif;
+background: var(--bg);
+color: var(--text-primary);
+min-height: 100vh;
+padding: 0;
+overflow-x: hidden;
+}
+
+/* TOP BAR */
+.topbar {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 12px 28px;
+background: var(--surface);
+border-bottom: 1px solid var(--border);
+}
+.topbar-left { display: flex; align-items: center; gap: 14px; }
+.logo { width: 28px; height: 28px; background: var(--accent); border-radius: 6px;
+display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 800; color: #fff; }
+.topbar-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: 0.02em; }
+.topbar-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.badge { font-size: 10px; padding: 3px 8px; border-radius: 20px; background: rgba(124,106,247,0.15); color: var(--accent); border: 1px solid rgba(124,106,247,0.3); font-weight: 500; }
+.date-pill { font-size: 11px; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+
+/* LAYOUT */
+.layout { display: flex; height: calc(100vh - 53px); }
+
+/* SIDEBAR */
+.sidebar {
+width: 52px;
+background: var(--surface);
+border-right: 1px solid var(--border);
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 16px 0;
+gap: 8px;
+flex-shrink: 0;
+}
+.nav-icon {
+width: 36px; height: 36px; border-radius: 8px;
+display: flex; align-items: center; justify-content: center;
+cursor: pointer; transition: background 0.2s;
+color: var(--text-muted); font-size: 16px;
+}
+.nav-icon:hover { background: var(--card); color: var(--text-primary); }
+.nav-icon.active { background: rgba(124,106,247,0.18); color: var(--accent); }
+.nav-divider { width: 24px; height: 1px; background: var(--border); margin: 4px 0; }
+
+/* MAIN */
+.main { flex: 1; overflow-y: auto; padding: 20px 24px; }
+
+/* FILTER ROW */
+.filter-row {
+display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.filter-label { font-size: 11px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; margin-right: 4px; }
+.filter-chip {
+font-size: 11px; padding: 5px 12px; border-radius: 20px;
+border: 1px solid var(--border); background: var(--card);
+color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+}
+.filter-chip.active { border-color: var(--accent); background: rgba(124,106,247,0.12); color: var(--accent); }
+.filter-chip:hover { border-color: var(--accent); color: var(--text-primary); }
+.spacer { flex: 1; }
+.refresh-btn {
+font-size: 11px; padding: 5px 14px; border-radius: 6px;
+border: 1px solid var(--border); background: var(--card);
+color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 6px;
+}
+.refresh-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+/* KPI CARDS */
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.kpi-card {
+background: var(--card);
+border: 1px solid var(--border);
+border-radius: 12px;
+padding: 18px 20px;
+position: relative;
+overflow: hidden;
+transition: transform 0.2s, border-color 0.2s;
+cursor: default;
+}
+.kpi-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+.kpi-card::before {
+content: ''; position: absolute; top: 0; left: 0; right: 0;
+height: 3px; border-radius: 12px 12px 0 0;
+}
+.kpi-card.purple::before { background: linear-gradient(90deg, var(--accent), #a78bfa); }
+.kpi-card.blue::before { background: linear-gradient(90deg, var(--accent2), #38bdf8); }
+.kpi-card.orange::before { background: linear-gradient(90deg, var(--accent3), #fbbf24); }
+.kpi-card.green::before { background: linear-gradient(90deg, var(--accent4), #34d399); }
+.kpi-label { font-size: 11px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+.kpi-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 8px; }
+.kpi-delta { font-size: 11px; display: flex; align-items: center; gap: 4px; }
+.delta-up { color: var(--accent4); }
+.delta-down { color: var(--accent3); }
+.delta-text { color: var(--text-muted); }
+.kpi-sparkline { margin-top: 12px; }
+
+/* CHART GRID */
+.chart-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px; }
+.chart-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+.chart-card {
+background: var(--card);
+border: 1px solid var(--border);
+border-radius: 12px;
+padding: 18px 20px;
+}
+.chart-card:hover { border-color: #2e3250; }
+.chart-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+.chart-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.chart-sub { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.chart-menu { font-size: 16px; color: var(--text-dim); cursor: pointer; }
+.chart-menu:hover { color: var(--text-muted); }
+
+/* SPARKLINE SVGs */
+svg { display: block; }
+
+/* BAR CHART */
+.bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; }
+.bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 4px; }
+.bar-wrap { display: flex; gap: 2px; align-items: flex-end; height: 100px; }
+.bar {
+border-radius: 3px 3px 0 0;
+width: 10px;
+transition: opacity 0.2s;
+}
+.bar:hover { opacity: 0.8; }
+.bar-label { font-size: 9px; color: var(--text-muted); text-align: center; }
+
+/* DONUT */
+.donut-wrap { display: flex; align-items: center; gap: 20px; }
+.donut-legend { display: flex; flex-direction: column; gap: 8px; }
+.legend-item { display: flex; align-items: center; gap: 8px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.legend-text { font-size: 11px; color: var(--text-muted); }
+.legend-val { font-size: 11px; font-weight: 600; color: var(--text-primary); margin-left: auto; }
+
+/* TABLE */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { font-size: 10px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+td { font-size: 12px; color: var(--text-primary); padding: 9px 12px; border-bottom: 1px solid rgba(37,40,54,0.5); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.rank { color: var(--text-muted); font-size: 11px; }
+.pill { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+.pill-green { background: rgba(94,244,156,0.12); color: var(--accent4); }
+.pill-red { background: rgba(247,145,106,0.12); color: var(--accent3); }
+.pill-purple { background: rgba(124,106,247,0.12); color: var(--accent); }
+
+/* PROGRESS BAR */
+.progress-row { margin-bottom: 12px; }
+.progress-meta { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.progress-name { font-size: 11px; color: var(--text-muted); }
+.progress-pct { font-size: 11px; font-weight: 600; color: var(--text-primary); }
+.progress-track { height: 5px; background: var(--border); border-radius: 10px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 10px; transition: width 1s ease; }
+
+/* MINI LINE */
+.mini-stat { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(37,40,54,0.5); }
+.mini-stat:last-child { border-bottom: none; }
+.mini-stat-label { font-size: 11px; color: var(--text-muted); }
+.mini-stat-val { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+
+/* WATERMARK */
+.watermark {
+text-align: center; padding: 14px; font-size: 10px; color: var(--text-dim);
+border-top: 1px solid var(--border); letter-spacing: 0.05em;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+<div class="topbar-left">
+<div class="logo">PA</div>
+<div>
+<div class="topbar-title">Sales Performance Analytics</div>
+<div class="topbar-subtitle">Business Intelligence · Regional Overview</div>
+</div>
+<span class="badge">● LIVE</span>
+</div>
+<div class="topbar-right">
+<div class="date-pill">📅 Jan 2024 – Jun 2024</div>
+<div class="avatar">YS</div>
+</div>
+</div>
+
+<div class="layout">
+<!-- SIDEBAR -->
+<div class="sidebar">
+<div class="nav-icon active" title="Dashboard">⊞</div>
+<div class="nav-icon" title="Charts">📊</div>
+<div class="nav-icon" title="Reports">📋</div>
+<div class="nav-divider"></div>
+<div class="nav-icon" title="Filter">⚙</div>
+<div class="nav-icon" title="Export">↗</div>
+</div>
+
+<!-- MAIN CANVAS -->
+<div class="main">
+
+<!-- FILTER ROW -->
+<div class="filter-row">
+<span class="filter-label">Region</span>
+<span class="filter-chip active">All</span>
+<span class="filter-chip">North</span>
+<span class="filter-chip">South</span>
+<span class="filter-chip">East</span>
+<span class="filter-chip">West</span>
+<div class="spacer"></div>
+<span class="filter-chip active">Q1</span>
+<span class="filter-chip">Q2</span>
+<button class="refresh-btn">↻ Refresh</button>
+</div>
+
+<!-- KPI CARDS -->
+<div class="kpi-row">
+<div class="kpi-card purple">
+<div class="kpi-label">Total Revenue</div>
+<div class="kpi-value">₹84.2M</div>
+<div class="kpi-delta">
+<span class="delta-up">▲ 18.4%</span>
+<span class="delta-text">vs last period</span>
+</div>
+<div class="kpi-sparkline">
+<svg width="100%" height="28" viewBox="0 0 120 28">
+<polyline points="0,22 20,18 40,20 60,10 80,12 100,6 120,4"
+fill="none" stroke="#7c6af7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+<polyline points="0,28 0,22 20,18 40,20 60,10 80,12 100,6 120,4 120,28"
+fill="url(#pg)" opacity="0.15"/>
+<defs>
+<linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#7c6af7"/>
+<stop offset="100%" stop-color="transparent"/>
+</linearGradient>
+</defs>
+</svg>
+</div>
+</div>
+<div class="kpi-card blue">
+<div class="kpi-label">Total Orders</div>
+<div class="kpi-value">12,847</div>
+<div class="kpi-delta">
+<span class="delta-up">▲ 9.2%</span>
+<span class="delta-text">vs last period</span>
+</div>
+<div class="kpi-sparkline">
+<svg width="100%" height="28" viewBox="0 0 120 28">
+<polyline points="0,20 20,16 40,18 60,14 80,16 100,10 120,8"
+fill="none" stroke="#4fc3f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+</svg>
+</div>
+</div>
+<div class="kpi-card orange">
+<div class="kpi-label">Avg. Order Value</div>
+<div class="kpi-value">₹6,552</div>
+<div class="kpi-delta">
+<span class="delta-down">▼ 2.1%</span>
+<span class="delta-text">vs last period</span>
+</div>
+<div class="kpi-sparkline">
+<svg width="100%" height="28" viewBox="0 0 120 28">
+<polyline points="0,10 20,12 40,10 60,14 80,12 100,16 120,18"
+fill="none" stroke="#f7916a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+</svg>
+</div>
+</div>
+<div class="kpi-card green">
+<div class="kpi-label">Customer Retention</div>
+<div class="kpi-value">73.6%</div>
+<div class="kpi-delta">
+<span class="delta-up">▲ 5.8%</span>
+<span class="delta-text">vs last period</span>
+</div>
+<div class="kpi-sparkline">
+<svg width="100%" height="28" viewBox="0 0 120 28">
+<polyline points="0,18 20,16 40,14 60,12 80,10 100,8 120,6"
+fill="none" stroke="#5ef49c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+</svg>
+</div>
+</div>
+</div>
+
+<!-- CHART ROW 1: Revenue trend + Category donut -->
+<div class="chart-grid">
+<!-- Line / Bar Chart -->
+<div class="chart-card">
+<div class="chart-header">
+<div>
+<div class="chart-title">Monthly Revenue Trend</div>
+<div class="chart-sub">Comparing current vs previous year</div>
+</div>
+<div class="chart-menu">⋯</div>
+</div>
+<!-- SVG Line Chart -->
+<svg width="100%" height="160" viewBox="0 0 500 160">
+<!-- Grid lines -->
+<line x1="0" y1="40" x2="500" y2="40" stroke="#252836" stroke-width="1"/>
+<line x1="0" y1="80" x2="500" y2="80" stroke="#252836" stroke-width="1"/>
+<line x1="0" y1="120" x2="500" y2="120" stroke="#252836" stroke-width="1"/>
+<text x="0" y="38" font-size="9" fill="#3d4155">90M</text>
+<text x="0" y="78" font-size="9" fill="#3d4155">60M</text>
+<text x="0" y="118" font-size="9" fill="#3d4155">30M</text>
+
+<!-- Previous year (dashed) -->
+<polyline points="30,110 110,100 190,105 270,90 350,88 430,82 510,78"
+fill="none" stroke="#3d4155" stroke-width="2" stroke-dasharray="5,4" stroke-linecap="round"/>
+
+<!-- Current year -->
+<defs>
+<linearGradient id="linefill" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#7c6af7" stop-opacity="0.3"/>
+<stop offset="100%" stop-color="#7c6af7" stop-opacity="0"/>
+</linearGradient>
+</defs>
+<polygon points="30,160 30,88 110,76 190,82 270,58 350,50 430,38 510,34 510,160"
+fill="url(#linefill)"/>
+<polyline points="30,88 110,76 190,82 270,58 350,50 430,38 510,34"
+fill="none" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+<!-- Dots -->
+<circle cx="270" cy="58" r="4" fill="#7c6af7" stroke="#16181f" stroke-width="2"/>
+<circle cx="430" cy="38" r="4" fill="#7c6af7" stroke="#16181f" stroke-width="2"/>
+
+<!-- Month labels -->
+<text x="25" y="152" font-size="9" fill="#7a7f96">Jan</text>
+<text x="103" y="152" font-size="9" fill="#7a7f96">Feb</text>
+<text x="183" y="152" font-size="9" fill="#7a7f96">Mar</text>
+<text x="263" y="152" font-size="9" fill="#7a7f96">Apr</text>
+<text x="343" y="152" font-size="9" fill="#7a7f96">May</text>
+<text x="423" y="152" font-size="9" fill="#7a7f96">Jun</text>
+
+<!-- Legend -->
+<rect x="340" y="8" width="8" height="8" rx="2" fill="#7c6af7"/>
+<text x="352" y="16" font-size="9" fill="#7a7f96">2024</text>
+<line x1="380" y1="12" x2="395" y2="12" stroke="#3d4155" stroke-width="2" stroke-dasharray="4,3"/>
+<text x="399" y="16" font-size="9" fill="#7a7f96">2023</text>
+</svg>
+</div>
+
+<!-- DONUT -->
+<div class="chart-card">
+<div class="chart-header">
+<div>
+<div class="chart-title">Revenue by Category</div>
+<div class="chart-sub">Product segment split</div>
+</div>
+<div class="chart-menu">⋯</div>
+</div>
+<div class="donut-wrap">
+<svg width="110" height="110" viewBox="0 0 110 110">
+<defs>
+<filter id="glow">
+<feGaussianBlur stdDeviation="2" result="blur"/>
+<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+</defs>
+<!-- Donut segments via stroke-dasharray on circle r=36, circumference=226 -->
+<!-- Electronics 38% = 86 -->
+<circle cx="55" cy="55" r="36" fill="none" stroke="#7c6af7" stroke-width="16"
+stroke-dasharray="86 140" stroke-dashoffset="0" transform="rotate(-90 55 55)" filter="url(#glow)"/>
+<!-- Clothing 27% = 61 -->
+<circle cx="55" cy="55" r="36" fill="none" stroke="#4fc3f7" stroke-width="16"
+stroke-dasharray="61 165" stroke-dashoffset="-86" transform="rotate(-90 55 55)"/>
+<!-- Food 20% = 45 -->
+<circle cx="55" cy="55" r="36" fill="none" stroke="#f7916a" stroke-width="16"
+stroke-dasharray="45 181" stroke-dashoffset="-147" transform="rotate(-90 55 55)"/>
+<!-- Other 15% = 34 -->
+<circle cx="55" cy="55" r="36" fill="none" stroke="#5ef49c" stroke-width="16"
+stroke-dasharray="33 193" stroke-dashoffset="-192" transform="rotate(-90 55 55)"/>
+<text x="55" y="51" text-anchor="middle" font-size="13" font-weight="700" fill="#e8eaf0" font-family="Syne, sans-serif">84.2M</text>
+<text x="55" y="63" text-anchor="middle" font-size="8" fill="#7a7f96">Total</text>
+</svg>
+<div class="donut-legend">
+<div class="legend-item">
+<div class="legend-dot" style="background:#7c6af7"></div>
+<span class="legend-text">Electronics</span>
+<span class="legend-val">38%</span>
+</div>
+<div class="legend-item">
+<div class="legend-dot" style="background:#4fc3f7"></div>
+<span class="legend-text">Clothing</span>
+<span class="legend-val">27%</span>
+</div>
+<div class="legend-item">
+<div class="legend-dot" style="background:#f7916a"></div>
+<span class="legend-text">Food</span>
+<span class="legend-val">20%</span>
+</div>
+<div class="legend-item">
+<div class="legend-dot" style="background:#5ef49c"></div>
+<span class="legend-text">Other</span>
+<span class="legend-val">15%</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- CHART ROW 2: Bar + Progress + Table -->
+<div class="chart-grid">
+<!-- Grouped Bar Chart by Region -->
+<div class="chart-card">
+<div class="chart-header">
+<div>
+<div class="chart-title">Regional Sales Breakdown</div>
+<div class="chart-sub">Quarterly performance by region</div>
+</div>
+<div class="chart-menu">⋯</div>
+</div>
+<svg width="100%" height="160" viewBox="0 0 460 155">
+<!-- grid -->
+<line x1="0" y1="30" x2="460" y2="30" stroke="#252836" stroke-width="1"/>
+<line x1="0" y1="70" x2="460" y2="70" stroke="#252836" stroke-width="1"/>
+<line x1="0" y1="110" x2="460" y2="110" stroke="#252836" stroke-width="1"/>
+
+<!-- North -->
+<rect x="20" y="50" width="22" height="60" rx="3" fill="#7c6af7" opacity="0.9"/>
+<rect x="46" y="32" width="22" height="78" rx="3" fill="#4fc3f7" opacity="0.7"/>
+<text x="44" y="128" font-size="9" fill="#7a7f96" text-anchor="middle">North</text>
+
+<!-- South -->
+<rect x="128" y="58" width="22" height="52" rx="3" fill="#7c6af7" opacity="0.9"/>
+<rect x="154" y="42" width="22" height="68" rx="3" fill="#4fc3f7" opacity="0.7"/>
+<text x="152" y="128" font-size="9" fill="#7a7f96" text-anchor="middle">South</text>
+
+<!-- East -->
+<rect x="236" y="38" width="22" height="72" rx="3" fill="#7c6af7" opacity="0.9"/>
+<rect x="262" y="60" width="22" height="50" rx="3" fill="#4fc3f7" opacity="0.7"/>
+<text x="260" y="128" font-size="9" fill="#7a7f96" text-anchor="middle">East</text>
+
+<!-- West -->
+<rect x="344" y="45" width="22" height="65" rx="3" fill="#7c6af7" opacity="0.9"/>
+<rect x="370" y="55" width="22" height="55" rx="3" fill="#4fc3f7" opacity="0.7"/>
+<text x="368" y="128" font-size="9" fill="#7a7f96" text-anchor="middle">West</text>
+
+<!-- Y labels -->
+<text x="0" y="30" font-size="8" fill="#3d4155">80M</text>
+<text x="0" y="70" font-size="8" fill="#3d4155">50M</text>
+<text x="0" y="110" font-size="8" fill="#3d4155">20M</text>
+
+<!-- Legend -->
+<rect x="290" y="12" width="7" height="7" rx="2" fill="#7c6af7"/>
+<text x="301" y="19" font-size="8" fill="#7a7f96">Q1 2024</text>
+<rect x="345" y="12" width="7" height="7" rx="2" fill="#4fc3f7" opacity="0.7"/>
+<text x="356" y="19" font-size="8" fill="#7a7f96">Q2 2024</text>
+</svg>
+</div>
+
+<!-- TARGET PROGRESS -->
+<div class="chart-card">
+<div class="chart-header">
+<div>
+<div class="chart-title">Sales Target Progress</div>
+<div class="chart-sub">Goal attainment by team</div>
+</div>
+<div class="chart-menu">⋯</div>
+</div>
+<div style="margin-top: 4px;">
+<div class="progress-row">
+<div class="progress-meta">
+<span class="progress-name">Team Alpha</span>
+<span class="progress-pct">92%</span>
+</div>
+<div class="progress-track">
+<div class="progress-fill" style="width:92%; background: linear-gradient(90deg,#7c6af7,#a78bfa)"></div>
+</div>
+</div>
+<div class="progress-row">
+<div class="progress-meta">
+<span class="progress-name">Team Beta</span>
+<span class="progress-pct">78%</span>
+</div>
+<div class="progress-track">
+<div class="progress-fill" style="width:78%; background: linear-gradient(90deg,#4fc3f7,#38bdf8)"></div>
+</div>
+</div>
+<div class="progress-row">
+<div class="progress-meta">
+<span class="progress-name">Team Gamma</span>
+<span class="progress-pct">65%</span>
+</div>
+<div class="progress-track">
+<div class="progress-fill" style="width:65%; background: linear-gradient(90deg,#f7916a,#fbbf24)"></div>
+</div>
+</div>
+<div class="progress-row">
+<div class="progress-meta">
+<span class="progress-name">Team Delta</span>
+<span class="progress-pct">84%</span>
+</div>
+<div class="progress-track">
+<div class="progress-fill" style="width:84%; background: linear-gradient(90deg,#5ef49c,#34d399)"></div>
+</div>
+</div>
+<div class="progress-row">
+<div class="progress-meta">
+<span class="progress-name">Team Sigma</span>
+<span class="progress-pct">55%</span>
+</div>
+<div class="progress-track">
+<div class="progress-fill" style="width:55%; background: linear-gradient(90deg,#f472b6,#ec4899)"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- TABLE: Top Products -->
+<div class="chart-card" style="margin-bottom:14px;">
+<div class="chart-header">
+<div>
+<div class="chart-title">Top Performing Products</div>
+<div class="chart-sub">Sorted by revenue contribution</div>
+</div>
+<div class="chart-menu">⋯</div>
+</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Product</th>
+<th>Category</th>
+<th>Units Sold</th>
+<th>Revenue</th>
+<th>Growth</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="rank">01</td>
+<td><strong>iPhone 15 Pro</strong></td>
+<td>Electronics</td>
+<td>4,821</td>
+<td>₹14.3M</td>
+<td class="delta-up">▲ 24.1%</td>
+<td><span class="pill pill-green">On Track</span></td>
+</tr>
+<tr>
+<td class="rank">02</td>
+<td><strong>Samsung 4K TV</strong></td>
+<td>Electronics</td>
+<td>2,934</td>
+<td>₹11.7M</td>
+<td class="delta-up">▲ 11.3%</td>
+<td><span class="pill pill-green">On Track</span></td>
+</tr>
+<tr>
+<td class="rank">03</td>
+<td><strong>Nike Air Max</strong></td>
+<td>Clothing</td>
+<td>7,102</td>
+<td>₹8.9M</td>
+<td class="delta-up">▲ 8.7%</td>
+<td><span class="pill pill-purple">Review</span></td>
+</tr>
+<tr>
+<td class="rank">04</td>
+<td><strong>MacBook Pro M3</strong></td>
+<td>Electronics</td>
+<td>1,209</td>
+<td>₹7.5M</td>
+<td class="delta-down">▼ 3.2%</td>
+<td><span class="pill pill-red">At Risk</span></td>
+</tr>
+<tr>
+<td class="rank">05</td>
+<td><strong>Levi's 501 Jeans</strong></td>
+<td>Clothing</td>
+<td>5,440</td>
+<td>₹6.1M</td>
+<td class="delta-up">▲ 5.4%</td>
+<td><span class="pill pill-green">On Track</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+</div>
+</div>
+
+<div class="watermark">Built with Power BI · Data Analytics Dashboard · © 2024</div>
+
+<script>
+// Filter chip toggle
+document.querySelectorAll('.filter-chip').forEach(chip => {
+chip.addEventListener('click', function() {
+const siblings = this.parentElement.querySelectorAll('.filter-chip');
+// only toggle within same group (rough split by index)
+this.classList.toggle('active');
+});
+});
+</script>
+</body>
+</html>
